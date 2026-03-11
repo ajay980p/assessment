@@ -8,13 +8,13 @@ const STATUS_OPTIONS = [
 ];
 
 export default function EditAttendanceModal({ isOpen, onClose, record, onSave }) {
-  const [status, setStatus] = useState(record?.status ?? 'present');
+  const [status, setStatus] = useState((record?.status ?? 'present').toString().toLowerCase());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (record) {
-      setStatus(record.status ?? 'present');
+      setStatus((record.status ?? 'present').toString().toLowerCase());
       setError(null);
     }
   }, [record]);
@@ -57,7 +57,7 @@ export default function EditAttendanceModal({ isOpen, onClose, record, onSave })
                 type="button"
                 onClick={() => setStatus(opt.value)}
                 className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                  status === opt.value
+                  (status ?? '').toLowerCase() === opt.value
                     ? 'border-blue-600 bg-blue-50 text-blue-700'
                     : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}

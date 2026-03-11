@@ -1,6 +1,7 @@
 from datetime import date
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Attendance, Employee
@@ -9,6 +10,10 @@ from utils.response import success_response, error_response
 from validators.attendance_validator import validate_create_attendance, validate_update_attendance
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
+
+DEFAULT_PAGE = 1
+DEFAULT_LIMIT = 10
+MAX_LIMIT = 100
 
 
 def _to_response(att: Attendance) -> dict:
@@ -20,18 +25,77 @@ def list_attendance(
     employee_id: int | None = Query(None),
     from_date: date | None = Query(None, alias="from"),
     to_date: date | None = Query(None, alias="to"),
+    department: str | None = Query(None),
+    status: str | None = Query(None),
+    search: str | None = Query(None),
+    page: int = Query(DEFAULT_PAGE, ge=1),
+    limit: int = Query(DEFAULT_LIMIT, ge=1, le=MAX_LIMIT),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Attendance)
+    today = date.today()
+    if from_date is not None and from_date > today:
+        return JSONResponse(
+            content=error_response("From date cannot be in the future"),
+            status_code=400,
+        )
+    if to_date is not None and to_date > today:
+        return JSONResponse(
+            content=error_response("To date cannot be in the future"),
+            status_code=400,
+        )
+    if from_date is not None and to_date is not None and from_date > to_date:
+        return JSONResponse(
+            content=error_response("From date must be before or equal to to date"),
+            status_code=400,
+        )
+    if status is not None and status.strip():
+        status_lower = status.strip().lower()
+        if status_lower not in ("present", "absent"):
+            return JSONResponse(
+                content=error_response("Status must be 'present' or 'absent'"),
+                status_code=400,
+            )
+    q = db.query(Attendance).join(Employee, Attendance.employee_id == Employee.id)
     if employee_id is not None:
         q = q.filter(Attendance.employee_id == employee_id)
     if from_date is not None:
         q = q.filter(Attendance.date >= from_date)
     if to_date is not None:
         q = q.filter(Attendance.date <= to_date)
-    records = q.order_by(Attendance.date.desc()).all()
+    if department and department.strip():
+        q = q.filter(Employee.department == department.strip())
+    if status and status.strip():
+        q = q.filter(Attendance.status.ilike(status.strip()))
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        q = q.filter(
+            (Employee.full_name.ilike(term)) | (Employee.department.ilike(term))
+        )
+    total = q.with_entities(func.count(Attendance.id)).scalar() or 0
+    offset = (page - 1) * limit
+    records = q.order_by(Attendance.date.desc()).offset(offset).limit(limit).all()
     data = [_to_response(att) for att in records]
-    return success_response("Attendance retrieved", data)
+    return success_response("Attendance retrieved", {"items": data, "total": total})
+
+
+@router.get("/stats")
+def attendance_stats(
+    date_param: date | None = Query(None, alias="date"),
+    db: Session = Depends(get_db),
+):
+    """Returns total_employees and marked_count for the given date (default today)."""
+    target = date_param if date_param is not None else date.today()
+    total_employees = db.query(Employee).count()
+    marked_count = (
+        db.query(func.count(func.distinct(Attendance.employee_id)))
+        .filter(Attendance.date == target)
+        .scalar()
+        or 0
+    )
+    return success_response(
+        "Stats retrieved",
+        {"date": str(target), "total_employees": total_employees, "marked_count": marked_count},
+    )
 
 
 @router.get("/{attendance_id}")

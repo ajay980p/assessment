@@ -1,18 +1,18 @@
 import { Pencil } from 'lucide-react';
 import EmployeeAvatar from '../Employees/EmployeeAvatar.jsx';
 
-const PAGE_SIZE = 4;
-
 export default function AttendanceRecordsTable({
   records,
   onEdit,
   page,
   total,
+  pageSize = 10,
   onPageChange,
 }) {
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const start = (page - 1) * PAGE_SIZE;
-  const paginated = records.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
+  const paginated = records;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -72,7 +72,7 @@ export default function AttendanceRecordsTable({
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {r.status === 'present' ? 'Present' : 'Absent'}
+                      {r.status?.toLowerCase() === 'present' ? 'Present' : 'Absent'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -96,7 +96,7 @@ export default function AttendanceRecordsTable({
       {total > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-6 py-3">
           <p className="text-sm text-gray-600">
-            Showing {start + 1} to {Math.min(start + PAGE_SIZE, total)} of {total} entries
+            Showing {start} to {end} of {total} entries
           </p>
           <div className="flex items-center gap-1">
             <button

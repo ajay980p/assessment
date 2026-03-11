@@ -6,30 +6,45 @@ import * as employeeService from '../services/employeeService.js';
 export const attendanceQueryKey = ['attendance'];
 
 /**
- * @param {{ from?: string, to?: string, employee_id?: number }} [filters]
+ * @param {{ from?: string, to?: string, employee_id?: number, department?: string, status?: string, search?: string, page?: number, limit?: number }} [filters]
  */
 export function useAttendance(filters = {}) {
   const queryClient = useQueryClient();
   const from = filters.from;
   const to = filters.to;
   const employeeId = filters.employee_id;
+  const department = filters.department;
+  const status = filters.status;
+  const search = filters.search;
+  const page = filters.page ?? 1;
+  const limit = filters.limit ?? 10;
 
   const {
-    data: rawRecords,
+    data: rawPayload,
     isLoading,
     error: attendanceError,
     refetch: refetchAttendance,
   } = useQuery({
-    queryKey: [...attendanceQueryKey, { from, to, employee_id: employeeId }],
+    queryKey: [
+      ...attendanceQueryKey,
+      { from, to, employee_id: employeeId, department, status, search, page, limit },
+    ],
     queryFn: () =>
       attendanceService.getAttendance({
         ...(from && { from }),
         ...(to && { to }),
         ...(employeeId != null && { employee_id: employeeId }),
+        ...(department && { department }),
+        ...(status && { status }),
+        ...(search && { search }),
+        page,
+        limit,
       }),
   });
 
-  const records = Array.isArray(rawRecords) ? rawRecords : [];
+  const items = Array.isArray(rawPayload?.items) ? rawPayload.items : [];
+  const total = typeof rawPayload?.total === 'number' ? rawPayload.total : 0;
+  const records = items;
 
   const { data: rawEmployees = [], error: employeesError, refetch: refetchEmployees } = useQuery({
     queryKey: ['employees'],
@@ -68,6 +83,7 @@ export function useAttendance(filters = {}) {
 
   return {
     records: recordsWithEmployee,
+    total,
     employees,
     loading: isLoading,
     error,
@@ -77,4 +93,18 @@ export function useAttendance(filters = {}) {
     updateAttendance: (id, payload) => updateMutation.mutateAsync({ id, payload }),
     invalidate: () => queryClient.invalidateQueries({ queryKey: attendanceQueryKey }),
   };
+}
+
+/**
+ * @param {string} [dateStr] - YYYY-MM-DD for stats (default today)
+ */
+export function useAttendanceStats(dateStr) {
+  const { data } = useQuery({
+    queryKey: ['attendance', 'stats', dateStr ?? 'today'],
+    queryFn: () => attendanceService.getAttendanceStats(dateStr),
+  });
+  const total_employees = data?.total_employees ?? 0;
+  const marked_count = data?.marked_count ?? 0;
+  const missingCount = Math.max(0, total_employees - marked_count);
+  return { total_employees, marked_count, missingCount };
 }
