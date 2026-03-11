@@ -8,7 +8,7 @@ import Toast from '../../components/ui/Toast.jsx';
 import { useEmployees } from '../../hooks/useEmployees.js';
 
 export default function EmployeesPage() {
-  const { employees, loading, error, fetchEmployees, deleteEmployee } = useEmployees();
+  const { employees, loading, error, fetchEmployees, deleteEmployee, invalidateEmployees } = useEmployees();
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, title: '', message: '' });
   const isEmpty = !loading && employees.length === 0;
@@ -16,14 +16,14 @@ export default function EmployeesPage() {
   const handleAddEmployee = useCallback(() => setModalOpen(true), []);
   const handleModalClose = useCallback(() => setModalOpen(false), []);
   const handleModalSuccess = useCallback(() => {
-    fetchEmployees();
+    invalidateEmployees();
     setToast({
       show: true,
       title: 'Form updated',
       message: 'Your changes have been saved successfully.',
     });
     setTimeout(() => setToast((p) => ({ ...p, show: false })), 5000);
-  }, [fetchEmployees]);
+  }, [invalidateEmployees]);
 
   return (
     <div className="space-y-6">
@@ -51,7 +51,7 @@ export default function EmployeesPage() {
       {loading ? (
         <EmployeeTableSkeleton />
       ) : isEmpty ? (
-        <EmployeeEmptyState onClearFilters={fetchEmployees} />
+        <EmployeeEmptyState onClearFilters={invalidateEmployees} />
       ) : (
         <EmployeeTable employees={employees} onDelete={deleteEmployee} />
       )}

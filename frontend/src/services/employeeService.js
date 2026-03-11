@@ -4,8 +4,7 @@ import client from './client.js';
  * @returns {Promise<{ id: number, employee_id: string, full_name: string, email: string, department: string }[]>}
  */
 export async function getEmployees() {
-  const { data } = await client.get('/employees');
-  return data;
+  return client.get('/employees');
 }
 
 /**
@@ -13,8 +12,7 @@ export async function getEmployees() {
  * @returns {Promise<{ id: number, employee_id: string, full_name: string, email: string, department: string }>}
  */
 export async function getEmployee(employeeId) {
-  const { data } = await client.get(`/employees/${encodeURIComponent(employeeId)}`);
-  return data;
+  return client.get(`/employees/${encodeURIComponent(employeeId)}`);
 }
 
 /**
@@ -22,8 +20,7 @@ export async function getEmployee(employeeId) {
  * @returns {Promise<{ id: number, employee_id: string, full_name: string, email: string, department: string }>}
  */
 export async function createEmployee(payload) {
-  const { data } = await client.post('/employees', payload);
-  return data;
+  return client.post('/employees', payload);
 }
 
 /**
@@ -32,8 +29,7 @@ export async function createEmployee(payload) {
  * @returns {Promise<{ id: number, employee_id: string, full_name: string, email: string, department: string }>}
  */
 export async function updateEmployee(employeeId, payload) {
-  const { data } = await client.patch(`/employees/${encodeURIComponent(employeeId)}`, payload);
-  return data;
+  return client.patch(`/employees/${encodeURIComponent(employeeId)}`, payload);
 }
 
 /**
