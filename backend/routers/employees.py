@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from config.database import get_db
-from models import Employee
+from models import Employee, Attendance
 from schemas import EmployeeCreate, EmployeeUpdate, EmployeeResponse
 from utils.response import success_response, error_response
 
@@ -83,6 +83,16 @@ def delete_employee(employee_id: str, db: Session = Depends(get_db)):
             content=error_response("Employee not found"),
             status_code=404,
         )
-    db.delete(emp)
-    db.commit()
-    return success_response("Employee deleted", None)
+    try:
+        db.query(Attendance).filter(Attendance.employee_id == emp.id).delete()
+        db.delete(emp)
+        db.commit()
+        return success_response("Employee deleted successfully", None)
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()  # ← Yeh poora error dikhayega
+        return JSONResponse(
+            content=error_response(f"Error: {str(e)}"),  # ← Error message response mein bhi dikhao
+            status_code=500,
+        )

@@ -30,8 +30,6 @@ class EmployeeResponse(EmployeeBase):
 class AttendanceBase(BaseModel):
     date: date
     status: str
-    check_in: datetime | None = None
-    check_out: datetime | None = None
 
 
 class AttendanceCreate(AttendanceBase):

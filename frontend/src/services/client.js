@@ -21,7 +21,10 @@ async function request(path, options = {}) {
     // ignore
   }
   if (!res.ok) {
-    const err = new Error(data?.message || res.statusText || 'Request failed');
+    let message = data?.message ?? data?.detail ?? res.statusText ?? 'Request failed';
+    if (Array.isArray(message)) message = message.join(' ');
+    if (typeof message !== 'string') message = 'Request failed';
+    const err = new Error(message);
     err.response = { status: res.status, data };
     throw err;
   }

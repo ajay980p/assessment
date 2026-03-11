@@ -56,8 +56,6 @@ def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db)):
         employee_id=data.employee_id,
         date=data.date,
         status=data.status,
-        check_in=data.check_in,
-        check_out=data.check_out,
     )
     db.add(att)
     db.commit()
@@ -77,10 +75,6 @@ def update_attendance(
         )
     if data.status is not None:
         att.status = data.status
-    if data.check_in is not None:
-        att.check_in = data.check_in
-    if data.check_out is not None:
-        att.check_out = data.check_out
     db.commit()
     db.refresh(att)
     return success_response("Attendance record updated", _to_response(att))

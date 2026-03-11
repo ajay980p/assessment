@@ -22,7 +22,5 @@ class Attendance(Base):
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     date = Column(Date, nullable=False)
     status = Column(String(32), nullable=False)  # e.g. present, absent, leave
-    check_in = Column(DateTime, nullable=True)
-    check_out = Column(DateTime, nullable=True)
 
     employee = relationship("Employee", back_populates="attendance_records")
