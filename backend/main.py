@@ -1,16 +1,29 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    datefmt="%H:%M:%S",
+)
+
 from database import engine, get_db, Base
 from routers import employees, attendance
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database: connected")
+    except Exception as e:
+        logger.error("Database connection failed: %s", e)
+        raise
     yield
-    # shutdown if needed
 
 
 app = FastAPI(
