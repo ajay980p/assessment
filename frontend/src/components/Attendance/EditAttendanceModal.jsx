@@ -9,16 +9,29 @@ const STATUS_OPTIONS = [
 
 export default function EditAttendanceModal({ isOpen, onClose, record, onSave }) {
   const [status, setStatus] = useState(record?.status ?? 'present');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (record) setStatus(record.status ?? 'present');
+    if (record) {
+      setStatus(record.status ?? 'present');
+      setError(null);
+    }
   }, [record]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!record) return;
-    onSave(record.id, { status });
-    onClose?.();
+    setError(null);
+    setSaving(true);
+    try {
+      await onSave(record.id, { status });
+      onClose?.();
+    } catch (err) {
+      setError(err?.message ?? 'Failed to update record');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!record) return null;
@@ -54,11 +67,16 @@ export default function EditAttendanceModal({ isOpen, onClose, record, onSave })
             ))}
           </div>
         </div>
+        {error && (
+          <p className="mt-3 text-sm text-red-600">{error}</p>
+        )}
         <div className="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button type="submit">Save</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
         </div>
       </form>
     </Modal>

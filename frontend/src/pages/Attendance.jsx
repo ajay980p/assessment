@@ -1,10 +1,17 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { Search } from 'lucide-react';
+import ApiErrorBanner from '../components/ui/ApiErrorBanner.jsx';
+import Toast from '../components/ui/Toast.jsx';
 import AttendanceWarningBanner from '../components/Attendance/AttendanceWarningBanner.jsx';
 import MarkAttendanceForm from '../components/Attendance/MarkAttendanceForm.jsx';
 import AttendanceRecordsTable from '../components/Attendance/AttendanceRecordsTable.jsx';
 import EditAttendanceModal from '../components/Attendance/EditAttendanceModal.jsx';
 import { useAttendance } from '../hooks/useAttendance.js';
+
+function showToast(setToast, title, message) {
+  setToast({ show: true, title, message });
+  setTimeout(() => setToast((p) => ({ ...p, show: false })), 5000);
+}
 
 function formatDateForApi(d) {
   const date = new Date(d);
@@ -37,11 +44,17 @@ export default function Attendance() {
     records,
     employees,
     loading,
+    error: apiError,
+    refetch,
     createAttendance,
     isCreating,
     updateAttendance,
     invalidate,
   } = useAttendance(filters);
+
+  const [submitError, setSubmitError] = useState(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [toast, setToast] = useState({ show: false, title: '', message: '' });
 
   const missingCount = useMemo(() => {
     if (!todayStr || !employees.length) return 0;
@@ -69,8 +82,14 @@ export default function Attendance() {
 
   const handleSubmitEntry = useCallback(
     async (payload) => {
-      await createAttendance(payload);
-      invalidate();
+      setSubmitError(null);
+      try {
+        await createAttendance(payload);
+        invalidate();
+        showToast(setToast, 'Attendance recorded', 'Entry has been saved successfully.');
+      } catch (err) {
+        setSubmitError(err?.message ?? 'Failed to save attendance');
+      }
     },
     [createAttendance, invalidate]
   );
@@ -80,6 +99,7 @@ export default function Attendance() {
       await updateAttendance(id, payload);
       setEditingRecord(null);
       invalidate();
+      showToast(setToast, 'Attendance updated', 'Record has been updated successfully.');
     },
     [updateAttendance, invalidate]
   );
@@ -87,6 +107,16 @@ export default function Attendance() {
   const handleFixNow = useCallback(() => {
     formRef.current?.scrollIntoView?.({ behavior: 'smooth' });
   }, []);
+
+  const handleRetry = useCallback(async () => {
+    setIsRetrying(true);
+    setSubmitError(null);
+    try {
+      await refetch();
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [refetch]);
 
   return (
     <div className="space-y-6">
@@ -105,6 +135,27 @@ export default function Attendance() {
           </div>
         </div>
       </div>
+
+      {apiError && (
+        <ApiErrorBanner
+          message={apiError}
+          onRetry={handleRetry}
+          isRetrying={isRetrying}
+        />
+      )}
+
+      {submitError && !apiError && (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm font-medium text-red-800">{submitError}</p>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="shrink-0 text-sm font-medium text-red-700 underline hover:text-red-900"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <AttendanceWarningBanner missingCount={missingCount} onFixNow={handleFixNow} />
 
@@ -139,6 +190,13 @@ export default function Attendance() {
         onClose={() => setEditingRecord(null)}
         record={editingRecord}
         onSave={handleEditSave}
+      />
+
+      <Toast
+        show={toast.show}
+        title={toast.title}
+        message={toast.message}
+        onDismiss={() => setToast((p) => ({ ...p, show: false }))}
       />
     </div>
   );

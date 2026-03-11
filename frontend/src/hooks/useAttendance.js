@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as attendanceService from '../services/attendanceService.js';
 import * as employeeService from '../services/employeeService.js';
@@ -13,7 +14,12 @@ export function useAttendance(filters = {}) {
   const to = filters.to;
   const employeeId = filters.employee_id;
 
-  const { data: records = [], isLoading } = useQuery({
+  const {
+    data: rawRecords,
+    isLoading,
+    error: attendanceError,
+    refetch: refetchAttendance,
+  } = useQuery({
     queryKey: [...attendanceQueryKey, { from, to, employee_id: employeeId }],
     queryFn: () =>
       attendanceService.getAttendance({
@@ -23,10 +29,14 @@ export function useAttendance(filters = {}) {
       }),
   });
 
-  const { data: employees = [] } = useQuery({
+  const records = Array.isArray(rawRecords) ? rawRecords : [];
+
+  const { data: rawEmployees = [], error: employeesError, refetch: refetchEmployees } = useQuery({
     queryKey: ['employees'],
     queryFn: employeeService.getEmployees,
   });
+
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
   const createMutation = useMutation({
     mutationFn: attendanceService.createAttendance,
@@ -49,10 +59,19 @@ export function useAttendance(filters = {}) {
     department: employeeMap[r.employee_id]?.department ?? '—',
   }));
 
+  const error =
+    attendanceError?.message ?? employeesError?.message ?? createMutation.error?.message ?? null;
+
+  const refetch = useCallback(async () => {
+    await Promise.all([refetchAttendance(), refetchEmployees()]);
+  }, [refetchAttendance, refetchEmployees]);
+
   return {
     records: recordsWithEmployee,
     employees,
     loading: isLoading,
+    error,
+    refetch,
     createAttendance: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
     updateAttendance: (id, payload) => updateMutation.mutateAsync({ id, payload }),
