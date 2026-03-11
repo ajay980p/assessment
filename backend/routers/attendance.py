@@ -6,6 +6,7 @@ from config.database import get_db
 from models import Attendance, Employee
 from schemas import AttendanceCreate, AttendanceUpdate, AttendanceResponse
 from utils.response import success_response, error_response
+from validators.attendance_validator import validate_create_attendance, validate_update_attendance
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 
@@ -44,18 +45,20 @@ def get_attendance(attendance_id: int, db: Session = Depends(get_db)):
     return success_response("Attendance record retrieved", _to_response(att))
 
 
+def _normalize_status(status: str) -> str:
+    return status.strip().lower().capitalize() if status else status
+
+
 @router.post("", status_code=201)
 def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db)):
-    emp = db.query(Employee).filter(Employee.id == data.employee_id).first()
-    if not emp:
-        return JSONResponse(
-            content=error_response("Employee not found"),
-            status_code=404,
-        )
+    err = validate_create_attendance(data, db)
+    if err:
+        return JSONResponse(content=error_response(err), status_code=400)
+    status = _normalize_status(data.status)
     att = Attendance(
         employee_id=data.employee_id,
         date=data.date,
-        status=data.status,
+        status=status,
     )
     db.add(att)
     db.commit()
@@ -73,8 +76,11 @@ def update_attendance(
             content=error_response("Attendance record not found"),
             status_code=404,
         )
+    err = validate_update_attendance(data, db)
+    if err:
+        return JSONResponse(content=error_response(err), status_code=400)
     if data.status is not None:
-        att.status = data.status
+        att.status = _normalize_status(data.status)
     db.commit()
     db.refresh(att)
     return success_response("Attendance record updated", _to_response(att))

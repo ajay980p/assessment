@@ -5,6 +5,7 @@ from config.database import get_db
 from models import Employee, Attendance
 from schemas import EmployeeCreate, EmployeeUpdate, EmployeeResponse
 from utils.response import success_response, error_response
+from validators.employee_validator import validate_create_employee, validate_update_employee
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -39,16 +40,14 @@ def get_employee(employee_id: str, db: Session = Depends(get_db)):
 
 @router.post("", status_code=201)
 def create_employee(data: EmployeeCreate, db: Session = Depends(get_db)):
-    if db.query(Employee).filter(Employee.email == data.email).first():
-        return JSONResponse(
-            content=error_response("Email already registered"),
-            status_code=400,
-        )
+    err = validate_create_employee(data, db)
+    if err:
+        return JSONResponse(content=error_response(err), status_code=400)
     emp = Employee(
         employee_id=_next_employee_id(db),
-        full_name=data.full_name,
-        email=data.email,
-        department=data.department,
+        full_name=data.full_name.strip(),
+        email=data.email.strip().lower(),
+        department=data.department.strip(),
     )
     db.add(emp)
     db.commit()
@@ -64,12 +63,15 @@ def update_employee(employee_id: str, data: EmployeeUpdate, db: Session = Depend
             content=error_response("Employee not found"),
             status_code=404,
         )
+    err = validate_update_employee(data, employee_id, db)
+    if err:
+        return JSONResponse(content=error_response(err), status_code=400)
     if data.full_name is not None:
-        emp.full_name = data.full_name
+        emp.full_name = data.full_name.strip()
     if data.email is not None:
-        emp.email = data.email
+        emp.email = data.email.strip().lower()
     if data.department is not None:
-        emp.department = data.department
+        emp.department = data.department.strip()
     db.commit()
     db.refresh(emp)
     return success_response("Employee updated", _to_response(emp))
