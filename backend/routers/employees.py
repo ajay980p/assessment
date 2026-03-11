@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -7,6 +8,7 @@ from schemas import EmployeeCreate, EmployeeUpdate, EmployeeResponse
 from utils.response import success_response, error_response
 from validators.employee_validator import validate_create_employee, validate_update_employee
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/employees", tags=["employees"])
 
 
@@ -90,11 +92,10 @@ def delete_employee(employee_id: str, db: Session = Depends(get_db)):
         db.delete(emp)
         db.commit()
         return success_response("Employee deleted successfully", None)
-    except Exception as e:
+    except Exception:
         db.rollback()
-        import traceback
-        traceback.print_exc()  # ← Yeh poora error dikhayega
+        logger.exception("Employee delete failed for employee_id=%s", employee_id)
         return JSONResponse(
-            content=error_response(f"Error: {str(e)}"),  # ← Error message response mein bhi dikhao
+            content=error_response("Unable to delete employee. Please try again."),
             status_code=500,
         )

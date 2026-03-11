@@ -1,19 +1,17 @@
 import logging
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
 
-load_dotenv()
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = settings.DATABASE_URL
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-if DATABASE_URL and "postgresql" in DATABASE_URL:
+if "postgresql" in DATABASE_URL:
     logger.info("Database: PostgreSQL")
 
 
