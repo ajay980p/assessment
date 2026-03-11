@@ -22,6 +22,7 @@ export function useEmployees() {
       queryClient.setQueryData(employeesQueryKey, (old) =>
         (old ?? []).filter((e) => e.employee_id !== employeeId)
       );
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -33,7 +34,10 @@ export function useEmployees() {
   const error =
     queryError?.response?.data?.message ?? queryError?.response?.data?.detail ?? queryError?.message ?? null;
 
-  const invalidateEmployees = () => queryClient.invalidateQueries({ queryKey: employeesQueryKey });
+  const invalidateEmployees = () => {
+    queryClient.invalidateQueries({ queryKey: employeesQueryKey });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  };
 
   return {
     employees,

@@ -57,6 +57,7 @@ export function useAttendance(filters = {}) {
     mutationFn: attendanceService.createAttendance,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -64,6 +65,7 @@ export function useAttendance(filters = {}) {
     mutationFn: ({ id, payload }) => attendanceService.updateAttendance(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceQueryKey });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
