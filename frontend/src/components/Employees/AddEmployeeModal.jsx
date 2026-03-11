@@ -74,7 +74,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
       handleClose();
       onSuccess?.();
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Failed to save';
+      const msg = err.response?.data?.message || err.response?.data?.detail || err.message || 'Failed to save';
       const message = Array.isArray(msg) ? msg.join(' ') : msg;
       setError('root', { type: 'manual', message });
     }

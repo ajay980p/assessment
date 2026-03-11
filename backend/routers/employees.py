@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Employee
 from schemas import EmployeeCreate, EmployeeUpdate, EmployeeResponse
+from utils.response import success_response, error_response
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -13,23 +15,35 @@ def _next_employee_id(db: Session) -> str:
     return f"EMP-{2000 + n}"
 
 
-@router.get("", response_model=list[EmployeeResponse])
+def _to_response(emp: Employee) -> dict:
+    return EmployeeResponse.model_validate(emp).model_dump()
+
+
+@router.get("")
 def list_employees(db: Session = Depends(get_db)):
-    return db.query(Employee).all()
+    employees = db.query(Employee).all()
+    data = [_to_response(e) for e in employees]
+    return success_response("Employees retrieved", data)
 
 
-@router.get("/{employee_id}", response_model=EmployeeResponse)
+@router.get("/{employee_id}")
 def get_employee(employee_id: str, db: Session = Depends(get_db)):
     emp = db.query(Employee).filter(Employee.employee_id == employee_id).first()
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return emp
+        return JSONResponse(
+            content=error_response("Employee not found"),
+            status_code=404,
+        )
+    return success_response("Employee retrieved", _to_response(emp))
 
 
-@router.post("", response_model=EmployeeResponse, status_code=201)
+@router.post("", status_code=201)
 def create_employee(data: EmployeeCreate, db: Session = Depends(get_db)):
     if db.query(Employee).filter(Employee.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+        return JSONResponse(
+            content=error_response("Email already registered"),
+            status_code=400,
+        )
     emp = Employee(
         employee_id=_next_employee_id(db),
         full_name=data.full_name,
@@ -39,14 +53,17 @@ def create_employee(data: EmployeeCreate, db: Session = Depends(get_db)):
     db.add(emp)
     db.commit()
     db.refresh(emp)
-    return emp
+    return success_response("Employee created", _to_response(emp))
 
 
-@router.patch("/{employee_id}", response_model=EmployeeResponse)
+@router.patch("/{employee_id}")
 def update_employee(employee_id: str, data: EmployeeUpdate, db: Session = Depends(get_db)):
     emp = db.query(Employee).filter(Employee.employee_id == employee_id).first()
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        return JSONResponse(
+            content=error_response("Employee not found"),
+            status_code=404,
+        )
     if data.full_name is not None:
         emp.full_name = data.full_name
     if data.email is not None:
@@ -55,14 +72,17 @@ def update_employee(employee_id: str, data: EmployeeUpdate, db: Session = Depend
         emp.department = data.department
     db.commit()
     db.refresh(emp)
-    return emp
+    return success_response("Employee updated", _to_response(emp))
 
 
-@router.delete("/{employee_id}", status_code=204)
+@router.delete("/{employee_id}")
 def delete_employee(employee_id: str, db: Session = Depends(get_db)):
     emp = db.query(Employee).filter(Employee.employee_id == employee_id).first()
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        return JSONResponse(
+            content=error_response("Employee not found"),
+            status_code=404,
+        )
     db.delete(emp)
     db.commit()
-    return None
+    return success_response("Employee deleted", None)

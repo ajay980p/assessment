@@ -21,9 +21,13 @@ async function request(path, options = {}) {
     // ignore
   }
   if (!res.ok) {
-    const err = new Error(res.statusText || 'Request failed');
+    const err = new Error(data?.message || res.statusText || 'Request failed');
     err.response = { status: res.status, data };
     throw err;
+  }
+  // API format: { success, message, data } — unwrap data for callers
+  if (data && data.success === true && 'data' in data) {
+    return data.data;
   }
   return data;
 }

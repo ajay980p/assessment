@@ -1,14 +1,20 @@
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Attendance, Employee
 from schemas import AttendanceCreate, AttendanceUpdate, AttendanceResponse
+from utils.response import success_response, error_response
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 
-@router.get("", response_model=list[AttendanceResponse])
+def _to_response(att: Attendance) -> dict:
+    return AttendanceResponse.model_validate(att).model_dump()
+
+
+@router.get("")
 def list_attendance(
     employee_id: int | None = Query(None),
     from_date: date | None = Query(None, alias="from"),
@@ -22,22 +28,30 @@ def list_attendance(
         q = q.filter(Attendance.date >= from_date)
     if to_date is not None:
         q = q.filter(Attendance.date <= to_date)
-    return q.order_by(Attendance.date.desc()).all()
+    records = q.order_by(Attendance.date.desc()).all()
+    data = [_to_response(att) for att in records]
+    return success_response("Attendance retrieved", data)
 
 
-@router.get("/{attendance_id}", response_model=AttendanceResponse)
+@router.get("/{attendance_id}")
 def get_attendance(attendance_id: int, db: Session = Depends(get_db)):
     att = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if not att:
-        raise HTTPException(status_code=404, detail="Attendance record not found")
-    return att
+        return JSONResponse(
+            content=error_response("Attendance record not found"),
+            status_code=404,
+        )
+    return success_response("Attendance record retrieved", _to_response(att))
 
 
-@router.post("", response_model=AttendanceResponse, status_code=201)
+@router.post("", status_code=201)
 def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db)):
     emp = db.query(Employee).filter(Employee.id == data.employee_id).first()
     if not emp:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        return JSONResponse(
+            content=error_response("Employee not found"),
+            status_code=404,
+        )
     att = Attendance(
         employee_id=data.employee_id,
         date=data.date,
@@ -48,16 +62,19 @@ def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db)):
     db.add(att)
     db.commit()
     db.refresh(att)
-    return att
+    return success_response("Attendance record created", _to_response(att))
 
 
-@router.patch("/{attendance_id}", response_model=AttendanceResponse)
+@router.patch("/{attendance_id}")
 def update_attendance(
     attendance_id: int, data: AttendanceUpdate, db: Session = Depends(get_db)
 ):
     att = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if not att:
-        raise HTTPException(status_code=404, detail="Attendance record not found")
+        return JSONResponse(
+            content=error_response("Attendance record not found"),
+            status_code=404,
+        )
     if data.status is not None:
         att.status = data.status
     if data.check_in is not None:
@@ -66,14 +83,17 @@ def update_attendance(
         att.check_out = data.check_out
     db.commit()
     db.refresh(att)
-    return att
+    return success_response("Attendance record updated", _to_response(att))
 
 
-@router.delete("/{attendance_id}", status_code=204)
+@router.delete("/{attendance_id}")
 def delete_attendance(attendance_id: int, db: Session = Depends(get_db)):
     att = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if not att:
-        raise HTTPException(status_code=404, detail="Attendance record not found")
+        return JSONResponse(
+            content=error_response("Attendance record not found"),
+            status_code=404,
+        )
     db.delete(att)
     db.commit()
-    return None
+    return success_response("Attendance record deleted", None)

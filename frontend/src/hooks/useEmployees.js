@@ -30,7 +30,7 @@ export function useEmployees() {
   };
 
   const error =
-    queryError?.response?.data?.detail ?? queryError?.message ?? deleteMutation.error?.response?.data?.detail ?? deleteMutation.error?.message ?? null;
+    queryError?.response?.data?.message ?? queryError?.response?.data?.detail ?? queryError?.message ?? deleteMutation.error?.response?.data?.message ?? deleteMutation.error?.response?.data?.detail ?? deleteMutation.error?.message ?? null;
 
   const invalidateEmployees = () => queryClient.invalidateQueries({ queryKey: employeesQueryKey });
 
