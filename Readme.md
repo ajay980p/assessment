@@ -2,15 +2,15 @@
 
 A lightweight, web-based HR management tool that allows an admin to manage employee records and track daily attendance.
 
+**Live hosted app — open in browser:** [http://80.225.204.112](http://80.225.204.112)
+
 ---
 
 ## Live Demo
 
-| Service       | URL                          |
-|---------------|------------------------------|
-| Frontend      | _Add Vercel URL here_        |
-| Backend API    | _Add Render URL here_       |
-| API Docs      | _Add Render URL here_/docs  |
+| Service    | URL |
+|------------|-----|
+| **App (access here)** | [http://80.225.204.112](http://80.225.204.112) |
 
 ---
 
