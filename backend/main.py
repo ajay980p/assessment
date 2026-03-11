@@ -9,7 +9,7 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-from database import engine, get_db, Base
+from config.database import engine, Base
 from routers import employees, attendance
 
 logger = logging.getLogger(__name__)

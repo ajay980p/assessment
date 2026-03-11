@@ -8,7 +8,7 @@ import Toast from '../../components/ui/Toast.jsx';
 import { useEmployees } from '../../hooks/useEmployees.js';
 
 export default function EmployeesPage() {
-  const { employees, loading, error, fetchEmployees, deleteEmployee, invalidateEmployees } = useEmployees();
+  const { employees, loading, error, deleteEmployee, invalidateEmployees } = useEmployees();
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, title: '', message: '' });
   const isEmpty = !loading && employees.length === 0;

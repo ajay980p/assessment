@@ -1,7 +1,7 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from database import get_db
+from config.database import get_db
 from models import Attendance, Employee
 from schemas import AttendanceCreate, AttendanceUpdate, AttendanceResponse
 
