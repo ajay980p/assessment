@@ -116,26 +116,11 @@ export default function AddEditEmployeeModal({ isOpen, onClose, onSuccess, emplo
 
   const title = isEdit ? 'Edit Employee' : 'Add New Employee';
   const submitLabel = isSubmitting ? 'Saving…' : isEdit ? 'Update Employee' : 'Save Employee';
-  const employeeIdDisplay = isEdit ? `#${employee.employee_id}` : 'Auto-generated on save';
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title={title}>
       <form onSubmit={handleSubmit(onValid)}>
         <div className="space-y-4">
-          <div>
-            <label htmlFor="employee-id" className="mb-1 block text-sm font-medium text-gray-700">
-              Employee ID
-            </label>
-            <input
-              id="employee-id"
-              type="text"
-              value={employeeIdDisplay}
-              readOnly
-              disabled
-              className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500"
-            />
-          </div>
-
           <div>
             <label htmlFor="full-name" className="mb-1 block text-sm font-medium text-gray-700">
               Full Name <span className="text-red-500">*</span>

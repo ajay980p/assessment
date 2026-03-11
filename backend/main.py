@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 
 from config.database import engine, Base
-from routers import employees, attendance
+from routers import employees, attendance, dashboard
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ app.add_middleware(
 
 app.include_router(employees.router)
 app.include_router(attendance.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/")
