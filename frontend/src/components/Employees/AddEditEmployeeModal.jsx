@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { AlertCircle } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
@@ -15,7 +17,29 @@ const DEPARTMENTS = [
   'Finance',
 ];
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const employeeFormSchema = z.object({
+  fullName: z
+    .string()
+    .min(1, 'Full name is required')
+    .trim()
+    .min(1, 'Full name is required'),
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .trim()
+    .toLowerCase()
+    .min(1, 'Email is required')
+    .max(254, 'Email address is too long')
+    .refine((v) => !/\s/.test(v), 'Email must not contain spaces')
+    .refine(
+      (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v),
+      'Please enter a valid email address (e.g. name@company.com)'
+    ),
+  department: z
+    .string()
+    .min(1, 'Please select a department')
+    .refine((v) => DEPARTMENTS.includes(v), { message: 'Please select a valid department' }),
+});
 
 const defaultValues = { fullName: '', email: '', department: '' };
 
@@ -26,7 +50,7 @@ const defaultValues = { fullName: '', email: '', department: '' };
  * @param {() => void} onSuccess
  * @param {{ id: number, employee_id: string, full_name: string, email: string, department: string } | null} [employee] - When set, modal is in edit mode.
  */
-export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee = null }) {
+export default function AddEditEmployeeModal({ isOpen, onClose, onSuccess, employee = null }) {
   const isEdit = Boolean(employee);
   const {
     register,
@@ -36,6 +60,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues,
+    resolver: zodResolver(employeeFormSchema),
   });
 
   const handleClose = () => {
@@ -74,7 +99,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
       handleClose();
       onSuccess?.();
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.detail || err.message || 'Failed to save';
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        err.message ||
+        'Failed to save';
       const message = Array.isArray(msg) ? msg.join(' ') : msg;
       setError('root', { type: 'manual', message });
     }
@@ -109,16 +138,14 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
 
           <div>
             <label htmlFor="full-name" className="mb-1 block text-sm font-medium text-gray-700">
-              Full Name
+              Full Name <span className="text-red-500">*</span>
             </label>
             <input
               id="full-name"
               type="text"
               placeholder="Enter full name"
               className={`w-full rounded-lg border px-3 py-2 text-sm placeholder:text-gray-400 ${inputErrorClass('fullName')}`}
-              {...register('fullName', {
-                required: 'Full name is required',
-              })}
+              {...register('fullName')}
             />
             {errors.fullName && (
               <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
@@ -130,20 +157,14 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
 
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-              Email Address
+              Email Address <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
               type="email"
               placeholder="name@company.com"
               className={`w-full rounded-lg border px-3 py-2 text-sm placeholder:text-gray-400 ${inputErrorClass('email')}`}
-              {...register('email', {
-                required: 'Please enter a valid email address',
-                pattern: {
-                  value: EMAIL_REGEX,
-                  message: 'Please enter a valid email address',
-                },
-              })}
+              {...register('email')}
             />
             {errors.email && (
               <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
@@ -155,7 +176,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
 
           <div>
             <label htmlFor="department" className="mb-1 block text-sm font-medium text-gray-700">
-              Department
+              Department <span className="text-red-500">*</span>
             </label>
             <select
               id="department"
@@ -166,9 +187,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee 
                 backgroundPosition: 'right 0.5rem center',
                 backgroundSize: '1.25rem',
               }}
-              {...register('department', {
-                required: 'Please select a department',
-              })}
+              {...register('department')}
             >
               <option value="">Select a department</option>
               {DEPARTMENTS.map((d) => (

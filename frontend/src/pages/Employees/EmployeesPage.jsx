@@ -3,7 +3,7 @@ import EmployeePageHeader from '../../components/Employees/EmployeePageHeader.js
 import EmployeeTableSkeleton from '../../components/Employees/EmployeeTableSkeleton.jsx';
 import EmployeeEmptyState from '../../components/Employees/EmployeeEmptyState.jsx';
 import EmployeeTable from '../../components/Employees/EmployeeTable.jsx';
-import AddEmployeeModal from '../../components/Employees/AddEmployeeModal.jsx';
+import AddEditEmployeeModal from '../../components/Employees/AddEditEmployeeModal.jsx';
 import DeleteEmployeeModal from '../../components/Employees/DeleteEmployeeModal.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { useEmployees } from '../../hooks/useEmployees.js';
@@ -52,7 +52,7 @@ export default function EmployeesPage() {
     <div className="space-y-6">
       <EmployeePageHeader onAddEmployee={handleAddEmployee} />
 
-      <AddEmployeeModal
+      <AddEditEmployeeModal
         isOpen={modalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
