@@ -1,0 +1,66 @@
+import { useState, useEffect } from 'react';
+import Modal from '../ui/Modal.jsx';
+import Button from '../ui/Button.jsx';
+
+const STATUS_OPTIONS = [
+  { value: 'present', label: 'Present' },
+  { value: 'absent', label: 'Absent' },
+];
+
+export default function EditAttendanceModal({ isOpen, onClose, record, onSave }) {
+  const [status, setStatus] = useState(record?.status ?? 'present');
+
+  useEffect(() => {
+    if (record) setStatus(record.status ?? 'present');
+  }, [record]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!record) return;
+    onSave(record.id, { status });
+    onClose?.();
+  };
+
+  if (!record) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Attendance">
+      <form onSubmit={handleSubmit}>
+        <p className="text-sm text-gray-600">
+          Update status for <strong>{record.employee_name}</strong> on{' '}
+          {new Date(record.date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+          .
+        </p>
+        <div className="mt-4">
+          <label className="mb-2 block text-sm font-medium text-gray-700">Status</label>
+          <div className="flex gap-2">
+            {STATUS_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setStatus(opt.value)}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium ${
+                  status === opt.value
+                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-6 flex justify-end gap-2 border-t border-gray-200 pt-4">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit">Save</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
