@@ -27,18 +27,20 @@ export default function Attendance() {
   const formRef = useRef(null);
   const [search, setSearch] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
-  const [tableDateFilter, setTableDateFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [employeeFilter, setEmployeeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [editingRecord, setEditingRecord] = useState(null);
 
-  const filters = useMemo(() => {
+  const apiFilters = useMemo(() => {
     const f = {};
-    if (tableDateFilter) {
-      f.from = tableDateFilter;
-      f.to = tableDateFilter;
-    }
+    if (dateFrom) f.from = dateFrom;
+    if (dateTo) f.to = dateTo;
+    if (employeeFilter) f.employee_id = Number(employeeFilter);
     return f;
-  }, [tableDateFilter]);
+  }, [dateFrom, dateTo, employeeFilter]);
 
   const {
     records,
@@ -50,7 +52,12 @@ export default function Attendance() {
     isCreating,
     updateAttendance,
     invalidate,
-  } = useAttendance(filters);
+  } = useAttendance(apiFilters);
+
+  const departmentOptions = useMemo(() => {
+    const set = new Set(employees.map((e) => e.department).filter(Boolean));
+    return Array.from(set).sort();
+  }, [employees]);
 
   const [submitError, setSubmitError] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -69,6 +76,9 @@ export default function Attendance() {
     if (departmentFilter) {
       list = list.filter((r) => r.department === departmentFilter);
     }
+    if (statusFilter) {
+      list = list.filter((r) => r.status?.toLowerCase() === statusFilter.toLowerCase());
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -78,7 +88,7 @@ export default function Attendance() {
       );
     }
     return list;
-  }, [records, departmentFilter, search]);
+  }, [records, departmentFilter, statusFilter, search]);
 
   const handleSubmitEntry = useCallback(
     async (payload) => {
@@ -118,6 +128,16 @@ export default function Attendance() {
     }
   }, [refetch]);
 
+  const clearFilters = useCallback(() => {
+    setDepartmentFilter('');
+    setDateFrom('');
+    setDateTo('');
+    setEmployeeFilter('');
+    setStatusFilter('');
+    setSearch('');
+    setPage(1);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -133,6 +153,94 @@ export default function Attendance() {
               className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-56"
             />
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-700">Filters</h2>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div className="min-w-[180px]">
+            <label className="mb-1 block text-xs font-medium text-gray-500">Employee</label>
+            <select
+              value={employeeFilter}
+              onChange={(e) => {
+                setEmployeeFilter(e.target.value);
+                setPage(1);
+              }}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">All Employees</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.full_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Date From</label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Date To</label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div className="min-w-[160px]">
+            <label className="mb-1 block text-xs font-medium text-gray-500">Department</label>
+            <select
+              value={departmentFilter}
+              onChange={(e) => {
+                setDepartmentFilter(e.target.value);
+                setPage(1);
+              }}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">All Departments</option>
+              {departmentOptions.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="min-w-[120px]">
+            <label className="mb-1 block text-xs font-medium text-gray-500">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="">All Status</option>
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Clear filters
+          </button>
         </div>
       </div>
 
@@ -169,16 +277,6 @@ export default function Attendance() {
 
       <AttendanceRecordsTable
         records={filteredRecords}
-        departmentFilter={departmentFilter}
-        dateFilter={tableDateFilter}
-        onDepartmentChange={(v) => {
-          setDepartmentFilter(v);
-          setPage(1);
-        }}
-        onDateChange={(v) => {
-          setTableDateFilter(v);
-          setPage(1);
-        }}
         onEdit={setEditingRecord}
         page={page}
         total={filteredRecords.length}

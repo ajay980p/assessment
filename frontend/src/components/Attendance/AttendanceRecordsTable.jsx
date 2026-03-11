@@ -5,10 +5,6 @@ const PAGE_SIZE = 4;
 
 export default function AttendanceRecordsTable({
   records,
-  departmentFilter,
-  dateFilter,
-  onDepartmentChange,
-  onDateChange,
   onEdit,
   page,
   total,
@@ -22,28 +18,6 @@ export default function AttendanceRecordsTable({
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-200 px-6 py-4">
         <h2 className="text-lg font-semibold text-gray-900">Attendance Records</h2>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <select
-            value={departmentFilter}
-            onChange={(e) => onDepartmentChange(e.target.value)}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">All Departments</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Product Design">Product Design</option>
-            <option value="HR">HR</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Sales">Sales</option>
-            <option value="Operations">Operations</option>
-            <option value="Finance">Finance</option>
-          </select>
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => onDateChange(e.target.value)}
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          />
-        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[600px]">
