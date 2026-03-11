@@ -2,6 +2,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Attendance, Employee
@@ -124,9 +125,16 @@ def create_attendance(data: AttendanceCreate, db: Session = Depends(get_db)):
         date=data.date,
         status=status,
     )
-    db.add(att)
-    db.commit()
-    db.refresh(att)
+    try:
+        db.add(att)
+        db.commit()
+        db.refresh(att)
+    except IntegrityError:
+        db.rollback()
+        return JSONResponse(
+            content=error_response("Attendance already marked for this employee on this date"),
+            status_code=400,
+        )
     return success_response("Attendance record created", _to_response(att))
 
 

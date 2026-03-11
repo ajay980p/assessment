@@ -20,14 +20,18 @@ export default function MarkAttendanceForm({ employees, onSubmit, isSubmitting }
   const [date, setDate] = useState(formatDateForInput(new Date()));
   const [status, setStatus] = useState('present');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const id = employeeId ? Number(employeeId) : null;
     if (id == null || !date) return;
-    onSubmit({ employee_id: id, date, status });
-    setEmployeeId('');
-    setDate(formatDateForInput(new Date()));
-    setStatus('present');
+    try {
+      await onSubmit({ employee_id: id, date, status });
+      setEmployeeId('');
+      setDate(formatDateForInput(new Date()));
+      setStatus('present');
+    } catch {
+      // Keep form values so user sees what they submitted; parent shows error
+    }
   };
 
   return (
