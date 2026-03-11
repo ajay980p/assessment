@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import Employees from './pages/Employees.jsx';
+import Employees from './pages/Employees';
 import Attendance from './pages/Attendance.jsx';
 import Payroll from './pages/Payroll.jsx';
 import Settings from './pages/Settings.jsx';
