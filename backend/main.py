@@ -3,15 +3,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from config.settings import settings, CORS_ORIGINS_LIST
+from config.database import engine, Base
+from routers import get_routers
+
+# Configure logging from settings
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     datefmt="%H:%M:%S",
 )
-
-from config.database import engine, Base
-from routers import employees, attendance, dashboard
-
 logger = logging.getLogger(__name__)
 
 
@@ -27,25 +28,24 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="HRMS Lite API",
+    title=settings.APP_NAME,
     description="Backend API for HRMS Lite",
-    version="1.0.0",
+    version=settings.API_VERSION,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=CORS_ORIGINS_LIST if CORS_ORIGINS_LIST else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(employees.router)
-app.include_router(attendance.router)
-app.include_router(dashboard.router)
+for router in get_routers():
+    app.include_router(router, prefix=settings.API_PREFIX)
 
 
 @app.get("/")
 def root():
-    return {"message": "HRMS Lite API", "docs": "/docs"}
+    return {"message": settings.APP_NAME, "version": settings.API_VERSION, "docs": "/docs"}

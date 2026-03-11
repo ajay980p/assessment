@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Employee, Attendance
 from schemas import EmployeeCreate, EmployeeUpdate, EmployeeResponse
-from utils.response import success_response, error_response
-from validators.employee_validator import validate_create_employee, validate_update_employee
+from utils import success_response, error_response
+from validators import validate_create_employee, validate_update_employee
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/employees", tags=["employees"])

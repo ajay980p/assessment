@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Calendar, UserCheck, UserX, ArrowRight } from 'lucide-react';
-import * as dashboardService from '../services/dashboardService.js';
+import { dashboardService } from '../services';
+import { PATHS } from '../config';
 
 const statCardConfig = [
   {
@@ -10,7 +11,7 @@ const statCardConfig = [
     subtext: 'Registered in system',
     icon: Users,
     color: 'bg-blue-50 text-blue-600',
-    href: '/employees',
+    href: PATHS.EMPLOYEES,
   },
   {
     key: 'today_present',
@@ -18,7 +19,7 @@ const statCardConfig = [
     subtext: 'Marked present today',
     icon: UserCheck,
     color: 'bg-green-50 text-green-600',
-    href: '/attendance',
+    href: PATHS.ATTENDANCE,
   },
   {
     key: 'today_absent',
@@ -26,7 +27,7 @@ const statCardConfig = [
     subtext: 'Marked absent today',
     icon: UserX,
     color: 'bg-amber-50 text-amber-600',
-    href: '/attendance',
+    href: PATHS.ATTENDANCE,
   },
   {
     key: 'today_pending',
@@ -34,7 +35,7 @@ const statCardConfig = [
     subtext: 'Not marked yet',
     icon: Calendar,
     color: 'bg-gray-100 text-gray-600',
-    href: '/attendance',
+    href: PATHS.ATTENDANCE,
   },
 ];
 
@@ -46,7 +47,7 @@ const quickActions = [
 export default function Dashboard() {
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['dashboard'],
-    queryFn: dashboardService.getDashboardStats,
+    queryFn: () => dashboardService.getDashboardStats(),
   });
 
   const getValue = (key) => {

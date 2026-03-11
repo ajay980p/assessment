@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Employee, Attendance
-from utils.response import success_response
+from utils import success_response
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 

@@ -1,23 +1,10 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import ApiErrorBanner from '../components/ui/ApiErrorBanner.jsx';
-import Toast from '../components/ui/Toast.jsx';
+import { ApiErrorBanner, Toast } from '../components/ui';
 import MarkAttendanceForm from '../components/Attendance/MarkAttendanceForm.jsx';
 import AttendanceRecordsTable from '../components/Attendance/AttendanceRecordsTable.jsx';
 import EditAttendanceModal from '../components/Attendance/EditAttendanceModal.jsx';
-import { useAttendance, useAttendanceStats } from '../hooks/useAttendance.js';
-
-function showToast(setToast, title, message) {
-  setToast({ show: true, title, message });
-  setTimeout(() => setToast((p) => ({ ...p, show: false })), 5000);
-}
-
-function formatDateForApi(d) {
-  const date = new Date(d);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { useAttendance, useAttendanceStats } from '../hooks';
+import { formatDateForApi, showToast } from '../utils';
 
 const todayStr = formatDateForApi(new Date());
 

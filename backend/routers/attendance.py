@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from config.database import get_db
 from models import Attendance, Employee
 from schemas import AttendanceCreate, AttendanceUpdate, AttendanceResponse
-from utils.response import success_response, error_response
-from validators.attendance_validator import validate_create_attendance, validate_update_attendance
+from utils import success_response, error_response
+from validators import validate_create_attendance, validate_update_attendance
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 

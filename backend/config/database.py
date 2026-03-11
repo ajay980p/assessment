@@ -5,13 +5,17 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
-DATABASE_URL = settings.DATABASE_URL
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    settings.DATABASE_URL,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_MAX_OVERFLOW,
+    pool_pre_ping=True,
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-if "postgresql" in DATABASE_URL:
+if "postgresql" in settings.DATABASE_URL:
     logger.info("Database: PostgreSQL")
 
 

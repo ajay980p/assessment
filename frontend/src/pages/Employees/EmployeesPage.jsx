@@ -5,8 +5,9 @@ import EmployeeEmptyState from '../../components/Employees/EmployeeEmptyState.js
 import EmployeeTable from '../../components/Employees/EmployeeTable.jsx';
 import AddEditEmployeeModal from '../../components/Employees/AddEditEmployeeModal.jsx';
 import DeleteEmployeeModal from '../../components/Employees/DeleteEmployeeModal.jsx';
-import Toast from '../../components/ui/Toast.jsx';
-import { useEmployees } from '../../hooks/useEmployees.js';
+import { Toast } from '../../components/ui';
+import { useEmployees } from '../../hooks';
+import { showToast } from '../../utils';
 
 export default function EmployeesPage() {
   const { employees, loading, error, deleteEmployee, invalidateEmployees } = useEmployees();
@@ -30,12 +31,7 @@ export default function EmployeesPage() {
   }, []);
   const handleModalSuccess = useCallback(() => {
     invalidateEmployees();
-    setToast({
-      show: true,
-      title: 'Form updated',
-      message: 'Your changes have been saved successfully.',
-    });
-    setTimeout(() => setToast((p) => ({ ...p, show: false })), 5000);
+    showToast(setToast, 'Form updated', 'Your changes have been saved successfully.');
   }, [invalidateEmployees]);
 
   const handleDeleteClick = useCallback((emp) => setEmployeeToDelete(emp), []);

@@ -1,19 +1,12 @@
 import { useState } from 'react';
 import { Calendar } from 'lucide-react';
-import Button from '../ui/Button.jsx';
+import { Button } from '../ui';
+import { formatDateForInput } from '../../utils';
 
 const STATUS_OPTIONS = [
   { value: 'present', label: 'Present' },
   { value: 'absent', label: 'Absent' },
 ];
-
-function formatDateForInput(date) {
-  const d = new Date(date);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 export default function MarkAttendanceForm({ employees, onSubmit, isSubmitting }) {
   const [employeeId, setEmployeeId] = useState('');
