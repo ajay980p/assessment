@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import ReactModal from 'react-modal';
-import { X, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
 import * as employeeService from '../../services/employeeService.js';
 
@@ -17,7 +17,17 @@ const DEPARTMENTS = [
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function AddEmployeeModal({ isOpen, onClose, onSuccess }) {
+const defaultValues = { fullName: '', email: '', department: '' };
+
+/**
+ * Common modal for Add and Edit employee.
+ * @param {boolean} isOpen
+ * @param {() => void} onClose
+ * @param {() => void} onSuccess
+ * @param {{ id: number, employee_id: string, full_name: string, email: string, department: string } | null} [employee] - When set, modal is in edit mode.
+ */
+export default function AddEmployeeModal({ isOpen, onClose, onSuccess, employee = null }) {
+  const isEdit = Boolean(employee);
   const {
     register,
     handleSubmit,
@@ -25,29 +35,42 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }) {
     setError,
     formState: { errors, isSubmitting },
   } = useForm({
-    defaultValues: {
-      fullName: '',
-      email: '',
-      department: '',
-    },
+    defaultValues,
   });
 
   const handleClose = () => {
-    reset();
+    reset(defaultValues);
     onClose?.();
   };
 
   useEffect(() => {
-    if (!isOpen) reset();
-  }, [isOpen, reset]);
+    if (!isOpen) return;
+    if (employee) {
+      reset({
+        fullName: employee.full_name,
+        email: employee.email,
+        department: employee.department,
+      });
+    } else {
+      reset(defaultValues);
+    }
+  }, [isOpen, employee, reset]);
 
   const onValid = async (data) => {
     try {
-      await employeeService.createEmployee({
-        full_name: data.fullName.trim(),
-        email: data.email.trim(),
-        department: data.department,
-      });
+      if (isEdit) {
+        await employeeService.updateEmployee(employee.employee_id, {
+          full_name: data.fullName.trim(),
+          email: data.email.trim(),
+          department: data.department,
+        });
+      } else {
+        await employeeService.createEmployee({
+          full_name: data.fullName.trim(),
+          email: data.email.trim(),
+          department: data.department,
+        });
+      }
       handleClose();
       onSuccess?.();
     } catch (err) {
@@ -62,30 +85,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }) {
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
       : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500';
 
-  return (
-    <ReactModal
-      isOpen={isOpen}
-      onRequestClose={handleClose}
-      className="relative w-full max-w-lg rounded-xl bg-white shadow-xl outline-none"
-      overlayClassName="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-      contentLabel="Add New Employee"
-      aria={{ labelledby: 'add-employee-title' }}
-    >
-      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h2 id="add-employee-title" className="text-lg font-semibold text-gray-900">
-          Add New Employee
-        </h2>
-        <button
-          type="button"
-          onClick={handleClose}
-          className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+  const title = isEdit ? 'Edit Employee' : 'Add New Employee';
+  const submitLabel = isSubmitting ? 'Saving…' : isEdit ? 'Update Employee' : 'Save Employee';
+  const employeeIdDisplay = isEdit ? `#${employee.employee_id}` : 'Auto-generated on save';
 
-      <form onSubmit={handleSubmit(onValid)} className="px-6 py-4">
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title={title}>
+      <form onSubmit={handleSubmit(onValid)}>
         <div className="space-y-4">
           <div>
             <label htmlFor="employee-id" className="mb-1 block text-sm font-medium text-gray-700">
@@ -94,7 +100,7 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }) {
             <input
               id="employee-id"
               type="text"
-              value="Auto-generated on save"
+              value={employeeIdDisplay}
               readOnly
               disabled
               className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500"
@@ -192,10 +198,10 @@ export default function AddEmployeeModal({ isOpen, onClose, onSuccess }) {
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : 'Save Employee'}
+            {submitLabel}
           </Button>
         </div>
       </form>
-    </ReactModal>
+    </Modal>
   );
 }

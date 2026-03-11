@@ -4,17 +4,30 @@ import EmployeeTableSkeleton from '../../components/Employees/EmployeeTableSkele
 import EmployeeEmptyState from '../../components/Employees/EmployeeEmptyState.jsx';
 import EmployeeTable from '../../components/Employees/EmployeeTable.jsx';
 import AddEmployeeModal from '../../components/Employees/AddEmployeeModal.jsx';
+import DeleteEmployeeModal from '../../components/Employees/DeleteEmployeeModal.jsx';
 import Toast from '../../components/ui/Toast.jsx';
 import { useEmployees } from '../../hooks/useEmployees.js';
 
 export default function EmployeesPage() {
   const { employees, loading, error, deleteEmployee, invalidateEmployees } = useEmployees();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [toast, setToast] = useState({ show: false, title: '', message: '' });
   const isEmpty = !loading && employees.length === 0;
 
-  const handleAddEmployee = useCallback(() => setModalOpen(true), []);
-  const handleModalClose = useCallback(() => setModalOpen(false), []);
+  const handleAddEmployee = useCallback(() => {
+    setEditingEmployee(null);
+    setModalOpen(true);
+  }, []);
+  const handleEditEmployee = useCallback((emp) => {
+    setEditingEmployee(emp);
+    setModalOpen(true);
+  }, []);
+  const handleModalClose = useCallback(() => {
+    setModalOpen(false);
+    setEditingEmployee(null);
+  }, []);
   const handleModalSuccess = useCallback(() => {
     invalidateEmployees();
     setToast({
@@ -25,6 +38,16 @@ export default function EmployeesPage() {
     setTimeout(() => setToast((p) => ({ ...p, show: false })), 5000);
   }, [invalidateEmployees]);
 
+  const handleDeleteClick = useCallback((emp) => setEmployeeToDelete(emp), []);
+  const handleDeleteModalClose = useCallback(() => setEmployeeToDelete(null), []);
+  const handleDeleteConfirm = useCallback(
+    async (employeeId) => {
+      await deleteEmployee(employeeId);
+      setEmployeeToDelete(null);
+    },
+    [deleteEmployee]
+  );
+
   return (
     <div className="space-y-6">
       <EmployeePageHeader onAddEmployee={handleAddEmployee} />
@@ -33,6 +56,14 @@ export default function EmployeesPage() {
         isOpen={modalOpen}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
+        employee={editingEmployee}
+      />
+
+      <DeleteEmployeeModal
+        isOpen={!!employeeToDelete}
+        onClose={handleDeleteModalClose}
+        employee={employeeToDelete}
+        onConfirm={handleDeleteConfirm}
       />
 
       <Toast
@@ -53,7 +84,7 @@ export default function EmployeesPage() {
       ) : isEmpty ? (
         <EmployeeEmptyState onClearFilters={invalidateEmployees} />
       ) : (
-        <EmployeeTable employees={employees} onDelete={deleteEmployee} />
+        <EmployeeTable employees={employees} onEdit={handleEditEmployee} onDelete={handleDeleteClick} />
       )}
     </div>
   );

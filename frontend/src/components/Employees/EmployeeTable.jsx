@@ -1,8 +1,8 @@
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import Badge from '../ui/Badge.jsx';
 import EmployeeAvatar from './EmployeeAvatar.jsx';
 
-export default function EmployeeTable({ employees, onDelete }) {
+export default function EmployeeTable({ employees, onEdit, onDelete }) {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <div className="overflow-x-auto">
@@ -45,14 +45,26 @@ export default function EmployeeTable({ employees, onDelete }) {
                   <Badge>{emp.department}</Badge>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onDelete(emp.employee_id)}
-                    className="inline-flex rounded-lg p-2 text-red-600 hover:bg-red-50"
-                    aria-label={`Delete ${emp.full_name}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center justify-end gap-1">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit(emp)}
+                        className="inline-flex rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+                        aria-label={`Edit ${emp.full_name}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onDelete(emp)}
+                      className="inline-flex rounded-lg p-2 text-red-600 hover:bg-red-50"
+                      aria-label={`Delete ${emp.full_name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

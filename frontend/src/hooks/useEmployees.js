@@ -26,7 +26,6 @@ export function useEmployees() {
   });
 
   const deleteEmployee = async (employeeId) => {
-    if (!confirm('Delete this employee?')) return;
     await deleteMutation.mutateAsync(employeeId);
   };
 
