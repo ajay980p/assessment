@@ -4,3 +4,27 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Pointer cursor for all interactive elements */
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+a,
+select,
+[role="button"],
+[role="link"],
+[tabindex="0"]:not([tabindex="-1"]) {
+  cursor: pointer;
+}
+
+/* Keep default for disabled */
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+textarea {
+  cursor: text;
+}
